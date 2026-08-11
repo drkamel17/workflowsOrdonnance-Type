@@ -1,0 +1,35 @@
+name: Keep Supabase Ordonnance-Type Alive
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Query ordonnances table
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.ORDONNANCE_SUPABASE_URL }}/rest/v1/ordonnances?select=id&limit=1" \
+            -H "apikey: ${{ secrets.ORDONNANCE_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.ORDONNANCE_SUPABASE_ANON_KEY }}")
+
+          if [ "$STATUS" != "200" ]; then
+            echo "======================================"
+            echo "Project : ordonnance-type"
+            echo "Time    : $(date -u)"
+            echo "Status  : HTTP $STATUS"
+            echo "Result  : Ping FAILED"
+            echo "======================================"
+            exit 1
+          fi
+
+          echo "======================================"
+          echo "Project : ordonnance-type"
+          echo "Time    : $(date -u)"
+          echo "Status  : HTTP $STATUS"
+          echo "Result  : Ping successful"
+          echo "======================================"
